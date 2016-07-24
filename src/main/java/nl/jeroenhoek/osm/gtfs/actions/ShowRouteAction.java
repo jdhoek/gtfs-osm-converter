@@ -18,29 +18,8 @@ public class ShowRouteAction implements Action {
 
     @Override
     public void perform(CommandLine arguments, TransportModel transportModel, CsvReader csvReader) {
-        List<String> agencyFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "agencies");
-        List<String> routeFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "routes");
-
-        csvReader.readAgencies(Collections.singletonList(
-                agency -> {
-                    if (agencyFilterList == null) return true;
-                    for (String inList : agencyFilterList) {
-                        if (inList.equals(agency.getId()) || inList.equals(agency.getName())) return true;
-                    }
-                    return false;
-                }
-        ));
-
-        csvReader.readRoutes(Arrays.asList(
-                route -> route.getAgency() != null,
-                route -> {
-                    if (routeFilterList == null) return true;
-                    for (String inList : routeFilterList) {
-                        if (inList.equals(route.getId())) return true;
-                    }
-                    return false;
-                }
-        ));
+        csvReader.readAgencies(GtfsConverterCliOptions.agencyFilterFromOptions(arguments));
+        csvReader.readRoutes(GtfsConverterCliOptions.routeFilterFromOptions(arguments));
 
         transportModel.getRoutes().forEach((id, route) -> System.out.println(route));
     }

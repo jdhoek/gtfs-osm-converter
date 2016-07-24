@@ -20,21 +20,7 @@ public class AgencyRoutesAction implements Action {
 
     @Override
     public void perform(CommandLine arguments, TransportModel transportModel, CsvReader csvReader) {
-        List<String> agencyFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "agencies");
-        List<Predicate<Agency>> filters;
-        if (agencyFilterList != null) {
-            Predicate<Agency> agencyFilter = agency -> {
-                for (String inList : agencyFilterList) {
-                    if (inList.equals(agency.getId()) || inList.equals(agency.getName())) return true;
-                }
-                return false;
-            };
-            filters = Collections.singletonList(agencyFilter);
-        } else {
-            filters = Collections.emptyList();
-        }
-
-        csvReader.readAgencies(filters);
+        csvReader.readAgencies(GtfsConverterCliOptions.agencyFilterFromOptions(arguments));
 
         Predicate<Route> nullAgencyFilter = route -> route.getAgency() != null;
         csvReader.readRoutes(Collections.singletonList(nullAgencyFilter));

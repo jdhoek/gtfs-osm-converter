@@ -1,8 +1,10 @@
 package nl.jeroenhoek.osm.gtfs.model;
 
+import nl.jeroenhoek.osm.gtfs.Reference;
+
 public class Route {
     String id;
-    Agency agency;
+    Reference<String, Agency> agency;
     String shortName;
     String longName;
 
@@ -14,11 +16,11 @@ public class Route {
         this.id = id;
     }
 
-    public Agency getAgency() {
+    public Reference<String, Agency> getAgency() {
         return agency;
     }
 
-    public void setAgency(Agency agency) {
+    public void setAgency(Reference<String, Agency> agency) {
         this.agency = agency;
     }
 
@@ -51,6 +53,7 @@ public class Route {
     @Override
     public String toString() {
         String name = "";
+        String agencyName = agency.isResolved() ? agency.getReferred().getName() : agency.getId();
         if (getShortName() != null && !getShortName().isEmpty()) {
             name += "(" + getShortName() + ") ";
         }
@@ -59,8 +62,6 @@ public class Route {
         } else {
             name += "-unnamed-";
         }
-        return getId() + ": " +
-                getAgency().getName() +
-                " -> " + name;
+        return getId() + ": " + agencyName + " -> " + name;
     }
 }

@@ -2,6 +2,7 @@ package nl.jeroenhoek.osm.gtfs;
 
 import nl.jeroenhoek.osm.gtfs.model.Agency;
 import nl.jeroenhoek.osm.gtfs.model.Route;
+import nl.jeroenhoek.osm.gtfs.model.Stop;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -9,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +33,7 @@ public class CsvReader {
             Agency agency = new Agency();
             agency.setId(record.get("agency_id"));
             agency.setName(record.get("agency_name"));
+
             if (passesFilters(agency, filters)) {
                 agencies.put(agency.getId(), agency);
             }
@@ -41,7 +44,6 @@ public class CsvReader {
     public void readRoutes(List<Predicate<Route>> filters) {
         Iterable<CSVRecord> records = readRecords(GtfsTable.ROUTES);
         Map<String, Route> routes = new HashMap<>();
-        Map<String, Agency> agencies = transportModel.getAgencies();
         for (CSVRecord record : records) {
             Route route = new Route();
             String id = record.get("route_id");
@@ -52,12 +54,32 @@ public class CsvReader {
             route.setId(id);
             route.setShortName(record.get("route_short_name"));
             route.setLongName(record.get("route_long_name"));
-            route.setAgency(agencies.get(record.get("agency_id")));
+            route.setAgency(Reference.byId(record.get("agency_id")));
+
             if (passesFilters(route, filters)) {
                 routes.put(route.getId(), route);
             }
         }
         transportModel.setRoutes(routes);
+    }
+
+    public void readStops(List<Predicate<Stop>> filters) {
+        Iterable<CSVRecord> records = readRecords(GtfsTable.STOPS);
+        Map<String, Stop> stops = new HashMap<>();
+        for (CSVRecord record : records) {
+            Stop stop = new Stop();
+            stop.setId(record.get("stop_id"));
+            stop.setCode(record.get("stop_code"));
+            stop.setName(record.get("stop_name"));
+            stop.setLatitude(new BigDecimal(record.get("stop_lat")));
+            stop.setLongitude(new BigDecimal(record.get("stop_lon")));
+            stop.setParent(Reference.byId(record.get("parent_station")));
+
+            if (passesFilters(stop, filters)) {
+                stops.put(stop.getId(), stop);
+            }
+        }
+        transportModel.setStops(stops);
     }
 
     static <T> boolean passesFilters(T object, List<Predicate<T>> filters) {

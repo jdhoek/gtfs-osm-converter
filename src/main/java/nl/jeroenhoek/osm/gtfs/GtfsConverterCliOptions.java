@@ -1,9 +1,13 @@
 package nl.jeroenhoek.osm.gtfs;
 
+import nl.jeroenhoek.osm.gtfs.model.Agency;
+import nl.jeroenhoek.osm.gtfs.model.Route;
+import nl.jeroenhoek.osm.gtfs.model.Stop;
 import org.apache.commons.cli.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.function.Predicate;
 
 public class GtfsConverterCliOptions {
     public static Options options() {
@@ -12,6 +16,14 @@ public class GtfsConverterCliOptions {
         agencies.setArgName("agencies");
         Option routes = new Option("r", "routes", true, "Routes to filter on.");
         routes.setArgName("routes");
+        Option northBound = new Option("n", "lat-max", true, "Maximum latitude.");
+        northBound.setArgName("lat");
+        Option southBound = new Option("s", "lat-min", true, "Minimum latitude.");
+        southBound.setArgName("lat");
+        Option westBound = new Option("w", "lon-min", true, "Minimum latitude.");
+        westBound.setArgName("lon");
+        Option eastBound = new Option("e", "lon-max", true, "Maximum latitude.");
+        eastBound.setArgName("lon");
 
 //        Option exceptions = new Option(null, "no-exceptions", false,
 //                "do not attach exceptions to ERROR and FATAL exceptions");
@@ -41,6 +53,10 @@ public class GtfsConverterCliOptions {
 //        options.addOption(help);
         options.addOption(agencies);
         options.addOption(routes);
+        options.addOption(northBound);
+        options.addOption(southBound);
+        options.addOption(westBound);
+        options.addOption(eastBound);
 //        options.addOption(exceptions);
 //        options.addOption(minLevel);
 //        options.addOption(maxLevel);
@@ -79,6 +95,56 @@ public class GtfsConverterCliOptions {
         return arguments;
     }
 
+    public static List<Predicate<Agency>> agencyFilterFromOptions(CommandLine arguments) {
+        List<String> agencyFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "agencies");
+        List<Predicate<Agency>> filters;
+        if (agencyFilterList != null) {
+            filters = Collections.singletonList(agency -> {
+                for (String inList : agencyFilterList) {
+                    if (inList.equals(agency.getId()) || inList.equals(agency.getName())) return true;
+                }
+                return false;
+            });
+        } else {
+            filters = Collections.emptyList();
+        }
+
+        return filters;
+    }
+
+    public static List<Predicate<Route>> routeFilterFromOptions(CommandLine arguments) {
+        List<String> routeFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "routes");
+        List<Predicate<Route>> filters = new ArrayList<>();
+
+        filters.add(route -> route.getAgency() != null);
+        if (routeFilterList != null) {
+            filters.add(route -> {
+                for (String inList : routeFilterList) {
+                    if (inList.equals(route.getId())) return true;
+                }
+                return false;
+            });
+        }
+
+        return filters;
+    }
+
+
+    public static List<Predicate<Stop>> stopFilterFromOptions(CommandLine arguments) {
+        Optional<BigDecimal> latMin = bigDecimalFromOption(arguments, "lat-min");
+        Optional<BigDecimal> latMax = bigDecimalFromOption(arguments, "lat-max");
+        Optional<BigDecimal> lonMin = bigDecimalFromOption(arguments, "lon-min");
+        Optional<BigDecimal> lonMax = bigDecimalFromOption(arguments, "lon-max");
+
+        List<Predicate<Stop>> filters = new ArrayList<>();
+        latMin.ifPresent(v -> filters.add(stop -> stop.getLatitude().compareTo(v) > 0));
+        latMax.ifPresent(v -> filters.add(stop -> stop.getLatitude().compareTo(v) < 0));
+        lonMin.ifPresent(v -> filters.add(stop -> stop.getLongitude().compareTo(v) > 0));
+        lonMax.ifPresent(v -> filters.add(stop -> stop.getLongitude().compareTo(v) < 0));
+
+        return filters;
+    }
+
     public static List<String> listFromArguments(CommandLine arguments, String key) {
         String[] args = arguments.getOptionValues(key);
         if (args != null) {
@@ -86,5 +152,18 @@ public class GtfsConverterCliOptions {
         }
 
         return null;
+    }
+
+    public static Optional<BigDecimal> bigDecimalFromOption(CommandLine arguments, String key) {
+        String value = arguments.getOptionValue(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(new BigDecimal(value));
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Input value for argument " + key + " is not a decimal value: " + value);
+        }
     }
 }

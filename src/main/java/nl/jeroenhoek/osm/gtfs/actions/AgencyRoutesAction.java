@@ -21,9 +21,7 @@ public class AgencyRoutesAction implements Action {
     @Override
     public void perform(CommandLine arguments, TransportModel transportModel, CsvReader csvReader) {
         csvReader.readAgencies(GtfsConverterCliOptions.agencyFilterFromOptions(arguments));
-
-        Predicate<Route> nullAgencyFilter = route -> route.getAgency() != null;
-        csvReader.readRoutes(Collections.singletonList(nullAgencyFilter));
+        csvReader.readRoutes(route -> route.getAgency() != null);
 
         transportModel.getRoutes().forEach((id, route) -> {
             System.out.println(route);

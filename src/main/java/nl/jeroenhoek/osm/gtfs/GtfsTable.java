@@ -4,19 +4,25 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public enum GtfsTable {
-    AGENCY,
-    STOPS,
-    ROUTES,
-    TRIPS,
-    STOP_TIMES,
-    CALENDAR,
-    CALENDAR_DATES,
-    FARE_ATTRIBUTES,
-    FARE_RULES,
-    SHAPES,
-    FREQUENCIES,
-    TRANSFERS,
-    FEED_INFO;
+    AGENCY(10),
+    STOPS(10_000),
+    ROUTES(1_000),
+    TRIPS(100_000),
+    STOP_TIMES(1_000_000),
+    CALENDAR(null),
+    CALENDAR_DATES(null),
+    FARE_ATTRIBUTES(null),
+    FARE_RULES(null),
+    SHAPES(1_000_000),
+    FREQUENCIES(null),
+    TRANSFERS(null),
+    FEED_INFO(null);
+
+    private final Integer progressInterval;
+
+    GtfsTable(Integer progressInterval) {
+        this.progressInterval = progressInterval;
+    }
 
     @Override
     public String toString() {
@@ -35,5 +41,9 @@ public enum GtfsTable {
             }
         }
         return Optional.empty();
+    }
+
+    public int progressInterval() {
+        return progressInterval == null ? 100_000 : progressInterval;
     }
 }

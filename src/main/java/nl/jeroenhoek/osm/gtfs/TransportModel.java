@@ -1,16 +1,16 @@
 package nl.jeroenhoek.osm.gtfs;
 
-import nl.jeroenhoek.osm.gtfs.model.Agency;
-import nl.jeroenhoek.osm.gtfs.model.Route;
-import nl.jeroenhoek.osm.gtfs.model.Stop;
+import nl.jeroenhoek.osm.gtfs.model.*;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 
 public class TransportModel {
-    Map<String, Agency> agencies;
-    Map<String, Route> routes;
-    Map<String, Stop> stops;
+    Map<String, Agency> agencies = new HashMap<>();
+    Map<String, Route> routes = new HashMap<>();
+    Map<String, Stop> stops = new HashMap<>();
+    Map<String, Itinerary> itineraries = new HashMap<>();
+    Map<String, Trip> trips = new HashMap<>();
 
     public TransportModel() {
 
@@ -20,23 +20,39 @@ public class TransportModel {
         return agencies;
     }
 
-    public void setAgencies(Map<String, Agency> agencies) {
-        this.agencies = agencies;
+    public void addAgency(Agency agency) {
+        this.agencies.put(agency.getId(), agency);
     }
 
     public Map<String, Route> getRoutes() {
         return routes;
     }
 
-    public void setRoutes(Map<String, Route> routes) {
-        this.routes = routes;
+    public void addRoute(Route route) {
+        this.routes.put(route.getId(), route);
     }
 
     public Map<String, Stop> getStops() {
         return stops;
     }
 
-    public void setStops(Map<String, Stop> stops) {
-        this.stops = stops;
+    public void addStop(Stop stop) {
+        this.stops.put(stop.getId(), stop);
+    }
+
+    public Map<String, Itinerary> getItineraries() {
+        return itineraries;
+    }
+
+    public void addItinerary(Itinerary itinerary) {
+        this.itineraries.put(itinerary.getId(), itinerary);
+    }
+
+    public Map<String, Trip> getTrips() {
+        return trips;
+    }
+
+    public void addTrip(Trip trip) {
+        this.trips.put(trip.getId(), trip);
     }
 }

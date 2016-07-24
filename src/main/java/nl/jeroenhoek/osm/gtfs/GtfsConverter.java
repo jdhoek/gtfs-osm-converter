@@ -17,6 +17,8 @@ public class GtfsConverter {
 
         Options options = GtfsConverterCliOptions.options();
 
+        Long start = System.nanoTime();
+
         try {
             Action action = parseAction(args);
             CommandLine arguments = GtfsConverterCliOptions.parseOptions(args, options);
@@ -25,11 +27,17 @@ public class GtfsConverter {
             CsvReader csvReader = new CsvReader(gtfsPaths, transportModel);
             action.perform(arguments, transportModel, csvReader);
         } catch (InvalidOptionsException e) {
+            e.ifMessage(System.out::println);
+            System.out.println();
             showHelp(options, e.getExitCode());
         } catch (Throwable e) {
             e.printStackTrace();
             System.exit(1);
         }
+
+        Long took = System.nanoTime() - start;
+        System.out.println();
+        System.out.println("Took " + (took / 1_000_000) + "ms");
 
         System.exit(0);
     }

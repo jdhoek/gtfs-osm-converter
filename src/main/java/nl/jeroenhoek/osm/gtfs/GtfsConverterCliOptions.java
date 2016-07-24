@@ -16,13 +16,16 @@ public class GtfsConverterCliOptions {
         agencies.setArgName("agencies");
         Option routes = new Option("r", "routes", true, "Routes to filter on.");
         routes.setArgName("routes");
-        Option northBound = new Option("n", "lat-max", true, "Maximum latitude.");
+        Option stops = new Option("s", "stops", true, "Stops to filter on.");
+        stops.setArgName("stops");
+
+        Option northBound = new Option("N", "lat-max", true, "Maximum latitude.");
         northBound.setArgName("lat");
-        Option southBound = new Option("s", "lat-min", true, "Minimum latitude.");
+        Option southBound = new Option("S", "lat-min", true, "Minimum latitude.");
         southBound.setArgName("lat");
-        Option westBound = new Option("w", "lon-min", true, "Minimum latitude.");
+        Option westBound = new Option("W", "lon-min", true, "Minimum latitude.");
         westBound.setArgName("lon");
-        Option eastBound = new Option("e", "lon-max", true, "Maximum latitude.");
+        Option eastBound = new Option("E", "lon-max", true, "Maximum latitude.");
         eastBound.setArgName("lon");
 
 //        Option exceptions = new Option(null, "no-exceptions", false,
@@ -53,6 +56,7 @@ public class GtfsConverterCliOptions {
 //        options.addOption(help);
         options.addOption(agencies);
         options.addOption(routes);
+        options.addOption(stops);
         options.addOption(northBound);
         options.addOption(southBound);
         options.addOption(westBound);
@@ -95,54 +99,68 @@ public class GtfsConverterCliOptions {
         return arguments;
     }
 
-    public static List<Predicate<Agency>> agencyFilterFromOptions(CommandLine arguments) {
+    public static Predicate<Agency> agencyFilterFromOptions(CommandLine arguments) {
         List<String> agencyFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "agencies");
-        List<Predicate<Agency>> filters;
+
+        Predicate<Agency> filter;
         if (agencyFilterList != null) {
-            filters = Collections.singletonList(agency -> {
-                for (String inList : agencyFilterList) {
-                    if (inList.equals(agency.getId()) || inList.equals(agency.getName())) return true;
-                }
-                return false;
-            });
+            filter = agency -> agencyFilterList.contains(agency.getId());
+            filter.or(agency -> agencyFilterList.contains(agency.getName()));
         } else {
-            filters = Collections.emptyList();
+            filter = agency -> true;
         }
 
-        return filters;
+        return filter;
     }
 
-    public static List<Predicate<Route>> routeFilterFromOptions(CommandLine arguments) {
+    public static Predicate<Route> routeFilterFromOptions(CommandLine arguments) {
         List<String> routeFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "routes");
-        List<Predicate<Route>> filters = new ArrayList<>();
 
-        filters.add(route -> route.getAgency() != null);
+        Predicate<Route> filter = route -> route.getAgency() != null;
         if (routeFilterList != null) {
-            filters.add(route -> {
-                for (String inList : routeFilterList) {
-                    if (inList.equals(route.getId())) return true;
-                }
-                return false;
-            });
+            filter.and(route -> routeFilterList.contains(route.getId()));
         }
 
-        return filters;
+        return filter;
     }
 
-
-    public static List<Predicate<Stop>> stopFilterFromOptions(CommandLine arguments) {
+    public static Predicate<Stop> stopFilterFromOptions(CommandLine arguments) {
         Optional<BigDecimal> latMin = bigDecimalFromOption(arguments, "lat-min");
         Optional<BigDecimal> latMax = bigDecimalFromOption(arguments, "lat-max");
         Optional<BigDecimal> lonMin = bigDecimalFromOption(arguments, "lon-min");
         Optional<BigDecimal> lonMax = bigDecimalFromOption(arguments, "lon-max");
 
-        List<Predicate<Stop>> filters = new ArrayList<>();
-        latMin.ifPresent(v -> filters.add(stop -> stop.getLatitude().compareTo(v) > 0));
-        latMax.ifPresent(v -> filters.add(stop -> stop.getLatitude().compareTo(v) < 0));
-        lonMin.ifPresent(v -> filters.add(stop -> stop.getLongitude().compareTo(v) > 0));
-        lonMax.ifPresent(v -> filters.add(stop -> stop.getLongitude().compareTo(v) < 0));
+        List<String> stopFilterList = GtfsConverterCliOptions.listFromArguments(arguments, "stops");
+        Predicate<Stop> filter = stopFilterList != null
+                ? stop -> stopFilterList.contains(stop.getId())
+                : stop -> true;
 
-        return filters;
+        String minHigherThanMax = "Maximum %1$s cannot be higher than the minimum %1$s (%2$s, %3$s)";
+        latMin.ifPresent(l -> latMax.ifPresent(h -> {
+            if (l.compareTo(h) > 0) {
+                throw InvalidOptionsException.withGenericError(String.format(minHigherThanMax, "latitude", l, h));
+            }
+        }));
+        lonMin.ifPresent(l -> lonMax.ifPresent(h -> {
+            if (l.compareTo(h) > 0) {
+                throw InvalidOptionsException.withGenericError(String.format(minHigherThanMax, "longitude", l, h));
+            }
+        }));
+
+        if (latMin.isPresent()) {
+            filter = filter.and(stop -> stop.getLatitude().compareTo(latMin.get()) > 0);
+        }
+        if (latMax.isPresent()) {
+            filter = filter.and(stop -> stop.getLatitude().compareTo(latMax.get()) < 0);
+        }
+        if (lonMin.isPresent()) {
+            filter = filter.and(stop -> stop.getLongitude().compareTo(lonMin.get()) > 0);
+        }
+        if (lonMax.isPresent()) {
+            filter = filter.and(stop -> stop.getLongitude().compareTo(lonMax.get()) < 0);
+        }
+
+        return filter;
     }
 
     public static List<String> listFromArguments(CommandLine arguments, String key) {

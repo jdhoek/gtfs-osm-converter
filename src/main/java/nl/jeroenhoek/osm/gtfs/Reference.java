@@ -44,6 +44,21 @@ public class Reference<I, R> {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Reference<?, ?> reference = (Reference<?, ?>) other;
+
+        return id != null ? id.equals(reference.id) : reference.id == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
     public String toString() {
         return isResolved() ? getReferred().toString() : getId().toString();
     }

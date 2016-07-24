@@ -10,7 +10,9 @@ import java.util.List;
 public class Itinerary {
     @Id
     String id;
+
     List<StopTime> stopTimes;
+
     @ReferenceId("id")
     Reference<String, Trip> trip;
 
@@ -47,5 +49,21 @@ public class Itinerary {
 
     public void setTrip(Reference<String, Trip> trip) {
         this.trip = trip;
+    }
+
+    public boolean hasSameRoute(Itinerary other) {
+        List<StopTime> myStopTimes = getStopTimes();
+        List<StopTime> otherStopTimes = other.getStopTimes();
+
+        if (myStopTimes == null || otherStopTimes == null) return false;
+        if (myStopTimes.size() != otherStopTimes.size()) return false;
+
+        for (int i = 0; i < myStopTimes.size(); i++) {
+            Reference<String, Stop> myStop = myStopTimes.get(i).getStop();
+            Reference<String, Stop> otherStop = otherStopTimes.get(i).getStop();
+
+            if (!myStop.equals(otherStop)) return false;
+        }
+        return true;
     }
 }

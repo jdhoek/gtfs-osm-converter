@@ -1,6 +1,7 @@
 package nl.jeroenhoek.osm.gtfs;
 
 import nl.jeroenhoek.osm.gtfs.model.*;
+import nl.jeroenhoek.osm.gtfs.model.type.Coordinate;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -89,7 +90,7 @@ public class CsvReader {
     public void readStopTimes(Predicate<StopTime> filter) {
         readStopTimes(filter, stopTime -> {
             String tripId = stopTime.getTrip().getId();
-            Itinerary itinerary = transportModel.getItineraries().get(stopTime.getTrip().getId());
+            Itinerary itinerary = transportModel.getItineraries().get(tripId);
             if (itinerary == null) {
                 itinerary = new Itinerary();
                 itinerary.setId(tripId);
@@ -140,12 +141,42 @@ public class CsvReader {
             Trip trip = new Trip();
             trip.setId(tripId);
             trip.setRoute(Reference.byId(record.get("route_id")));
+            trip.setShape(Reference.byId(record.get("shape_id")));
 
             if (filter.test(trip)) {
                 action.accept(trip);
             }
         }
     }
+
+    public void readShapes(Predicate<Shape.ShapePart> filter) {
+        readShapes(filter, shapePart -> {
+            String shapeId = shapePart.getId();
+            Shape shape = transportModel.getShapes().get(shapeId);
+            if (shape == null) {
+                shape = new Shape();
+                shape.setId(shapeId);
+                transportModel.addShape(shape);
+            }
+            shape.addShapePart(shapePart);
+        });
+    }
+
+    public void readShapes(Predicate<Shape.ShapePart> filter, Consumer<Shape.ShapePart> action) {
+        Iterable<CSVRecord> records = readRecords(GtfsTable.SHAPES);
+        for (CSVRecord record : records) {
+            Shape.ShapePart shapePart = new Shape.ShapePart();
+            shapePart.setId(record.get("shape_id"));
+            BigDecimal lat = new BigDecimal(record.get("shape_pt_lat"));
+            BigDecimal lon = new BigDecimal(record.get("shape_pt_lon"));
+            shapePart.setCoordinate(new Coordinate(lat, lon));
+            shapePart.setSequence(Integer.valueOf(record.get("shape_pt_sequence")));
+            if (filter.test(shapePart)) {
+                action.accept(shapePart);
+            }
+        }
+    }
+
 
     Iterable<CSVRecord> readRecords(GtfsTable gtfsTable) {
         System.out.println("-- Reading " + gtfsTable + " --");

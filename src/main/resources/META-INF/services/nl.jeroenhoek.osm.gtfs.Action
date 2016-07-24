@@ -2,3 +2,4 @@ nl.jeroenhoek.osm.gtfs.actions.ShowRouteAction
 nl.jeroenhoek.osm.gtfs.actions.AgencyRoutesAction
 nl.jeroenhoek.osm.gtfs.actions.StopAnalysisAction
 nl.jeroenhoek.osm.gtfs.actions.WhatStopsHereAction
+nl.jeroenhoek.osm.gtfs.actions.RoutesInAreaAction

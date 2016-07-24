@@ -11,6 +11,7 @@ public class TransportModel {
     Map<String, Stop> stops = new HashMap<>();
     Map<String, Itinerary> itineraries = new HashMap<>();
     Map<String, Trip> trips = new HashMap<>();
+    Map<String, Shape> shapes = new HashMap<>();
 
     public TransportModel() {
 
@@ -54,5 +55,23 @@ public class TransportModel {
 
     public void addTrip(Trip trip) {
         this.trips.put(trip.getId(), trip);
+    }
+
+    public Map<String, Shape> getShapes() {
+        return shapes;
+    }
+
+    public void addShape(Shape shape) {
+        this.shapes.put(shape.getId(), shape);
+    }
+
+    @Override
+    public String toString() {
+        return agencies.size() +  " agencies\n" +
+                routes.size() + " routes\n" +
+                stops.size() + " stops\n" +
+                itineraries.size() + " itineraries\n" +
+                shapes.size() + " shapes\n" +
+                trips.size() + " trips\n";
     }
 }

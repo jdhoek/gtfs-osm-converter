@@ -8,10 +8,14 @@ import java.time.LocalTime;
 public class StopTime {
     @ReferenceId("id")
     Reference<String, Trip> trip;
+
     LocalTime arrival;
+
     LocalTime departure;
+
     @ReferenceId("id")
     Reference<String, Stop> stop;
+
     int sequence;
 
     public Reference<String, Trip> getTrip() {

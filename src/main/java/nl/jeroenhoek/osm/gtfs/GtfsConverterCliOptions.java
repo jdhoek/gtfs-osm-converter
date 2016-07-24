@@ -28,32 +28,9 @@ public class GtfsConverterCliOptions {
         Option eastBound = new Option("E", "lon-max", true, "Maximum latitude.");
         eastBound.setArgName("lon");
 
-//        Option exceptions = new Option(null, "no-exceptions", false,
-//                "do not attach exceptions to ERROR and FATAL exceptions");
-//
-//        Option minLevel = new Option("m", "min-level", true, "minimum log-level");
-//        minLevel.setArgName("level");
-//        Option maxLevel = new Option("M", "max-level", true, "maximum log-level");
-//        maxLevel.setArgName("level");
-//
-//        Option logTypes = new Option("t", "types", true, "log types to generate");
-//        logTypes.setArgName("types");
-//
-//        // One of these three options should be supplied, so they are grouped in an OptionGroup,
-//        // and that group is made required.
-//        Option help = new Option("h", "help", false, "print this message");
-//        Option duration = new Option("d", "duration", true,
-//                "generate logs for this long; `time' is a duration in seconds, minutes, or hours (e.g., 20s, 10m, 1h)");
-//        duration.setArgName("time");
-//        Option indefinite = new Option("g", "keep-going", false, "keep sending log-events indefinitely");
-//        OptionGroup time = new OptionGroup();
-//
-//        time.addOption(help);
-//        time.addOption(duration);
-//        time.addOption(indefinite);
-//        time.setRequired(true);
-//
-//        options.addOption(help);
+        Option outputFile = new Option("o", "output", true, "Output file.");
+        outputFile.setArgName("file");
+
         options.addOption(agencies);
         options.addOption(routes);
         options.addOption(stops);
@@ -61,11 +38,7 @@ public class GtfsConverterCliOptions {
         options.addOption(southBound);
         options.addOption(westBound);
         options.addOption(eastBound);
-//        options.addOption(exceptions);
-//        options.addOption(minLevel);
-//        options.addOption(maxLevel);
-//        options.addOption(logTypes);
-//        options.addOptionGroup(time);
+        options.addOption(outputFile);
 
         return options;
     }
@@ -105,7 +78,7 @@ public class GtfsConverterCliOptions {
         Predicate<Agency> filter;
         if (agencyFilterList != null) {
             filter = agency -> agencyFilterList.contains(agency.getId());
-            filter.or(agency -> agencyFilterList.contains(agency.getName()));
+            filter = filter.or(agency -> agencyFilterList.contains(agency.getName()));
         } else {
             filter = agency -> true;
         }
@@ -135,7 +108,8 @@ public class GtfsConverterCliOptions {
                 ? stop -> stopFilterList.contains(stop.getId())
                 : stop -> true;
 
-        String minHigherThanMax = "Maximum %1$s cannot be higher than the minimum %1$s (%2$s, %3$s)";
+        // Show a helpful message if the longitude or latitude min and max parameters are mixed up.
+        String minHigherThanMax = "Minimum %1$s cannot be higher than the maximum %1$s (%2$s, %3$s)";
         latMin.ifPresent(l -> latMax.ifPresent(h -> {
             if (l.compareTo(h) > 0) {
                 throw InvalidOptionsException.withGenericError(String.format(minHigherThanMax, "latitude", l, h));

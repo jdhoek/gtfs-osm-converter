@@ -4,9 +4,14 @@ import nl.jeroenhoek.osm.gtfs.Action;
 import nl.jeroenhoek.osm.gtfs.CsvReader;
 import nl.jeroenhoek.osm.gtfs.GtfsConverterCliOptions;
 import nl.jeroenhoek.osm.gtfs.TransportModel;
+import nl.jeroenhoek.osm.gtfs.osm.OSMDrawing;
 import org.apache.commons.cli.CommandLine;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class StopAnalysisAction implements Action {
     @Override
@@ -30,6 +35,13 @@ public class StopAnalysisAction implements Action {
         System.out.println("---");
         System.out.println();
         System.out.println(transportModel.getStops().size());
+
+        if (arguments.hasOption("output")) {
+            File file = new File(arguments.getOptionValue("output"));
+            OSMDrawing osmDrawing = new OSMDrawing();
+            osmDrawing.addStops(transportModel.getStops().values());
+            osmDrawing.save(file);
+        }
     }
 
     public class BoundingBox {

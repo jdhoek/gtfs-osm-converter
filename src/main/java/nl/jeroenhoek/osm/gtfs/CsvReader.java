@@ -84,11 +84,17 @@ public class CsvReader {
         for (CSVRecord record : records) {
             Stop stop = new Stop();
             stop.setId(record.get("stop_id"));
-            stop.setCode(record.get("stop_code"));
+            if (record.isMapped("stop_code")) {
+            	stop.setCode(record.get("stop_code"));
+            }
             stop.setName(record.get("stop_name"));
-            stop.setLatitude(new BigDecimal(record.get("stop_lat")));
-            stop.setLongitude(new BigDecimal(record.get("stop_lon")));
-            if (record.isMapped("parent_station")) {
+            try {
+            	stop.setLatitude(new BigDecimal(record.get("stop_lat")));
+            	stop.setLongitude(new BigDecimal(record.get("stop_lon")));
+            } catch (NumberFormatException nfe) {
+            	continue;
+            }
+        	if (record.isMapped("parent_station")) {
             	stop.setParent(Reference.byId(record.get("parent_station")));
             }
             if (filter.test(stop)) {

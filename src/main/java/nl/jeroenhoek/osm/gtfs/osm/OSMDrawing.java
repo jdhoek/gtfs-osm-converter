@@ -1,19 +1,29 @@
 package nl.jeroenhoek.osm.gtfs.osm;
 
-import nl.jeroenhoek.osm.gtfs.model.Stop;
-import nl.jeroenhoek.osm.gtfs.model.type.Coordinate;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import nl.jeroenhoek.osm.gtfs.model.Stop;
+import nl.jeroenhoek.osm.gtfs.model.type.Coordinate;
 
 public class OSMDrawing {
     final Document document;
@@ -43,6 +53,7 @@ public class OSMDrawing {
             node.setAttribute("lat", stop.getLatitude().toString());
             node.setAttribute("lon", stop.getLongitude().toString());
             addTag(node, "name", stop.getName());
+            addTag(node, "highway", "bus_stop");
             addTag(node, "public_transport", "platform");
             addTag(node, "ref", stop.getId());
             root.appendChild(node);

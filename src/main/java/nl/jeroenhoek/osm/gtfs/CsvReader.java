@@ -1,13 +1,9 @@
 package nl.jeroenhoek.osm.gtfs;
 
-import nl.jeroenhoek.osm.gtfs.model.*;
-import nl.jeroenhoek.osm.gtfs.model.type.Coordinate;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -15,6 +11,19 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.input.BOMInputStream;
+
+import nl.jeroenhoek.osm.gtfs.model.Agency;
+import nl.jeroenhoek.osm.gtfs.model.Itinerary;
+import nl.jeroenhoek.osm.gtfs.model.Route;
+import nl.jeroenhoek.osm.gtfs.model.Shape;
+import nl.jeroenhoek.osm.gtfs.model.Stop;
+import nl.jeroenhoek.osm.gtfs.model.StopTime;
+import nl.jeroenhoek.osm.gtfs.model.Trip;
+import nl.jeroenhoek.osm.gtfs.model.type.Coordinate;
 
 public class CsvReader {
     private final Map<GtfsTable, Path> gtfsPaths;
@@ -75,12 +84,19 @@ public class CsvReader {
         for (CSVRecord record : records) {
             Stop stop = new Stop();
             stop.setId(record.get("stop_id"));
-            stop.setCode(record.get("stop_code"));
+            if (record.isMapped("stop_code")) {
+            	stop.setCode(record.get("stop_code"));
+            }
             stop.setName(record.get("stop_name"));
-            stop.setLatitude(new BigDecimal(record.get("stop_lat")));
-            stop.setLongitude(new BigDecimal(record.get("stop_lon")));
-            stop.setParent(Reference.byId(record.get("parent_station")));
-
+            try {
+            	stop.setLatitude(new BigDecimal(record.get("stop_lat")));
+            	stop.setLongitude(new BigDecimal(record.get("stop_lon")));
+            } catch (NumberFormatException nfe) {
+            	continue;
+            }
+        	if (record.isMapped("parent_station")) {
+            	stop.setParent(Reference.byId(record.get("parent_station")));
+            }
             if (filter.test(stop)) {
                 action.accept(stop);
             }
@@ -184,7 +200,7 @@ public class CsvReader {
         assertTableFileExists(tableFile, gtfsTable);
         Reader in;
         try {
-            in = new FileReader(tableFile.toFile());
+            in = new InputStreamReader(new BOMInputStream(new FileInputStream(tableFile.toFile())));
         } catch (FileNotFoundException e) {
             // Already established that file exists.
             throw new RuntimeException(e);
